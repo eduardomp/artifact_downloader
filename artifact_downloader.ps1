@@ -21,7 +21,7 @@ param([string]$Repo = "", [string]$Branch = "")
 try {
 
     if (Get-Command "gh" -errorAction SilentlyContinue) {
-        "gh cli present..."
+        "✅ gh cli present..."
     }
 
     $ghLoginStatus = (gh auth status) 2>&1
@@ -33,23 +33,28 @@ try {
     if ($Repo -eq "") { $Repo = read-host "Enter repository url" }
     if ($Branch -eq "") { $Branch = read-host "Enter branch name" }
 
-    "> Repository: $Repo"
-    "> Branch: $Branch"
+    if ($Repo -eq "") { throw "Repository argument is mandatory!" }
+    if ($Branch -eq "") { throw "Branch argument is mandatory!" }
 
-    "⏳ Listing all artifacts from workflow executions in $Repo on branch $Branch ..."
+    "⏳ Listing all recent workflows executions that contains artifacts..."
 
-    $ghWorkflowIds = (gh run list --json databaseId --jq .[].databaseId --repo $Repo --branch $Branch) 2>&1
+    $ghWorkflows = (gh run list -L 10 --json "createdAt,name,event,databaseId" --repo $Repo --branch $Branch ) | ConvertFrom-Json
 
-    # TODO delete this
-    # "workflow execution ids $ghWorkflowIds"
-
+    $runsWithArtifact = [System.Collections.ArrayList]@()
     
+    #filtering workflows that contains artifacts
+    foreach ($workflow in $ghWorkflows) {
 
+        $runOutput = (gh run view $workflow.databaseId --repo $Repo) 
 
-    
+        if ($runOutput -contains "ARTIFACTS") {
+            $runsWithArtifact.add($workflow)
+        }
+    }
+
     exit 0 # success
 }
 catch {
-    "[⚠️ Error] Line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
+    "[❌ Error] Line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
     exit 1
 }
