@@ -33,10 +33,17 @@ try {
     if ($Repo -eq "") { $Repo = read-host "Enter repository url" }
     if ($Branch -eq "") { $Branch = read-host "Enter branch name" }
 
-    "Repository: $Repo"
-    "Branch: $Branch"
+    "> Repository: $Repo"
+    "> Branch: $Branch"
 
-    "Listing "
+    "⏳ Listing all artifacts from workflow executions in $Repo on branch $Branch ..."
+
+    $ghWorkflowIds = (gh run list --json databaseId --jq .[].databaseId --repo $Repo --branch $Branch) 2>&1
+
+    # TODO delete this
+    # "workflow execution ids $ghWorkflowIds"
+
+    
 
 
     
