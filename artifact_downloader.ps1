@@ -19,17 +19,30 @@
 param([string]$Repo = "", [string]$Branch = "")
 
 try {
+
+    if (Get-Command "gh" -errorAction SilentlyContinue) {
+        "gh cli present..."
+    }
+
+    $ghLoginStatus = (gh auth status) 2>&1
+
+    if ($ghLoginStatus -like "You are not logged*") {
+        throw "gh is not logged in any github account, please run 'gh auth login' to authenticate first!"
+    }
+
     if ($Repo -eq "") { $Repo = read-host "Enter repository url" }
     if ($Branch -eq "") { $Branch = read-host "Enter branch name" }
 
     "Repository: $Repo"
     "Branch: $Branch"
 
+    "Listing "
+
 
     
     exit 0 # success
 }
 catch {
-    "⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
+    "[⚠️ Error] Line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
     exit 1
 }
