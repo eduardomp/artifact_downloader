@@ -16,9 +16,18 @@
 	Author: Eduardo Medeiros Pereira <edu.medeirospereira@gmail.com>
 #>
 
-param([string]$Repo = "", [string]$Branch = "")
+param([string]$Repo = "", [string]$Branch = "", [string]$limit = "")
 
 try {
+
+    if (Get-Module -ListAvailable -Name PS-Menu) {
+        "✅ PS-Menu module installed..."
+    }
+    else {
+        "🚨 PS-Menu not installed, installing..."
+        Install-Module PS-Menu -Force -Confirm:$False
+    }
+
 
     if (Get-Command "gh" -errorAction SilentlyContinue) {
         "✅ gh cli present..."
@@ -36,9 +45,11 @@ try {
     if ($Repo -eq "") { throw "Repository argument is mandatory!" }
     if ($Branch -eq "") { throw "Branch argument is mandatory!" }
 
-    "⏳ Listing all recent workflows executions that contains artifacts..."
+    if ($limit -eq "") { $limit = 15 }
 
-    $ghWorkflows = (gh run list -L 10 --json "createdAt,name,event,databaseId" --repo $Repo --branch $Branch ) | ConvertFrom-Json
+    "⏳ Searching in the last $limit most recent workflows executions for valid artifacts..."
+
+    $ghWorkflows = (gh run list -L $limit --json "createdAt,name,event,databaseId" --repo $Repo --branch $Branch ) | ConvertFrom-Json
 
     $runsWithArtifact = [System.Collections.ArrayList]@()
     
@@ -47,14 +58,24 @@ try {
 
         $runOutput = (gh run view $workflow.databaseId --repo $Repo) 
 
-        if ($runOutput -contains "ARTIFACTS") {
-            $runsWithArtifact.add($workflow)
+        if ($runOutput -contains "ARTIFACTS" && $runOutput -notcontains "expired") {
+            $out = $runsWithArtifact.add($workflow) 
         }
     }
+
+    "📋 Choose the workflow run to download the related artifacts"
+    
+    $selection = Menu @($runsWithArtifact)
+
+    "⬇️ Downloading..."
+
+    gh run download $selection.databaseId --repo $Repo -v
+    
+    "✅ All done!"
 
     exit 0 # success
 }
 catch {
-    "[❌ Error] Line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
+    "[🚨 Error] Line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
     exit 1
 }
