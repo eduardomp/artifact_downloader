@@ -58,7 +58,7 @@ try {
 
         $runOutput = (gh run view $workflow.databaseId --repo $Repo) 
 
-        if ($runOutput -contains "ARTIFACTS" && $runOutput -notcontains "expired") {
+        if ($runOutput -contains "ARTIFACTS" -And $runOutput -notcontains "expired") {
             $out = $runsWithArtifact.add($workflow) 
         }
     }
@@ -69,7 +69,7 @@ try {
 
     "⬇️ Downloading..."
 
-    gh run download $selection.databaseId --repo $Repo -v
+    gh run download $selection.databaseId --repo $Repo
     
     "✅ All done!"
 
