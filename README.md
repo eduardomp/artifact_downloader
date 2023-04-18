@@ -1,6 +1,6 @@
 # artifact_downloader
 
-PowerShell script to Download artifacts from previous workflow runs on Github Actions Workflows
+PowerShell script to Download artifacts from previous runs from Github Actions Workflows 
 
 # Dependencies
 
